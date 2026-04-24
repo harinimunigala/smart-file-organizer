@@ -27,7 +27,7 @@ A **beginner-friendly Python tool** that automatically organizes your messy file
 
 ### Option 1: Clone the Repository
 ```bash
-git clone https://github.com/harinimugila/smart-file-organizer.git
+git clone https://github.com/harinimunigala/smart-file-organizer.git
 cd smart-file-organizer
 ```
 
