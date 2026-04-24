@@ -1,65 +1,169 @@
 import os
 import shutil
-import re
+from pathlib import Path
 
-folder_path =input("Enter folder path: ")
-
-file_types = {
-    "Images": [".jpg", ".png", ".jpeg", ".gif"],
-    "Documents": [".pdf", ".txt", ".docx", ".pptx"],
-    "Videos": [".mp4", ".mkv"],
-    "Music": [".mp3", ".wav"]
+# Dictionary mapping file extensions to categories
+FILE_CATEGORIES = {
+    # Images
+    'jpg': 'Images', 'jpeg': 'Images', 'png': 'Images', 'gif': 'Images',
+    'bmp': 'Images', 'svg': 'Images', 'webp': 'Images', 'ico': 'Images',
+    
+    # Documents
+    'pdf': 'Documents', 'doc': 'Documents', 'docx': 'Documents',
+    'txt': 'Documents', 'xls': 'Documents', 'xlsx': 'Documents',
+    'ppt': 'Documents', 'pptx': 'Documents', 'csv': 'Documents',
+    
+    # Videos
+    'mp4': 'Videos', 'mkv': 'Videos', 'avi': 'Videos', 'mov': 'Videos',
+    'flv': 'Videos', 'wmv': 'Videos', 'webm': 'Videos', 'mov': 'Videos',
+    
+    # Audio
+    'mp3': 'Audio', 'wav': 'Audio', 'flac': 'Audio', 'aac': 'Audio',
+    'm4a': 'Audio', 'ogg': 'Audio', 'wma': 'Audio', 'alac': 'Audio',
+    
+    # Code
+    'py': 'Code', 'js': 'Code', 'html': 'Code', 'css': 'Code',
+    'java': 'Code', 'cpp': 'Code', 'c': 'Code', 'rb': 'Code',
+    'go': 'Code', 'rs': 'Code', 'php': 'Code', 'sql': 'Code',
+    
+    # Archives
+    'zip': 'Archives', 'rar': 'Archives', '7z': 'Archives',
+    'tar': 'Archives', 'gz': 'Archives', 'iso': 'Archives',
 }
 
-def get_category(filename):
-    ext = os.path.splitext(filename)[1].lower()
-    
-    for category, extensions in file_types.items():
-        if ext in extensions:
-            return category
-    
-    return "Others"
 
-def create_folder_if_not_exists(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+def get_category(file_extension):
+    """
+    Get the category folder for a file extension.
+    
+    Args:
+        file_extension (str): The file extension (without the dot)
+    
+    Returns:
+        str: Category name, or 'Other' if not found
+    """
+    return FILE_CATEGORIES.get(file_extension.lower(), 'Other')
 
-def clean_filename(filename):
-    name, ext = os.path.splitext(filename)
-    
-    name = name.lower()
-    name = re.sub(r'[^a-z0-9]', '_', name)
-    name = re.sub(r'_+', '_', name)
-    
-    return name + ext
 
-def get_unique_name(path):
-    base, ext = os.path.splitext(path)
-    counter = 1
+def organize_files(folder_path):
+    """
+    Organize all files in a folder into category subfolders.
     
-    while os.path.exists(path):
-        path = f"{base}_{counter}{ext}"
-        counter += 1
+    Args:
+        folder_path (str): Path to the folder to organize
     
-    return path
-
-files = os.listdir(folder_path)
-
-for file in files:
-    file_path = os.path.join(folder_path, file)
-    
-    if os.path.isfile(file_path):
-        category = get_category(file)
-        category_path = os.path.join(folder_path, category)
+    Returns:
+        dict: Summary with counts of organized files
+    """
+    try:
+        # Convert to Path object for cross-platform compatibility
+        folder = Path(folder_path)
         
-        print(f"Moving {file} → {category}")
+        # Validate folder exists
+        if not folder.exists():
+            print(f"❌ Error: Folder '{folder_path}' does not exist!")
+            return None
         
-        create_folder_if_not_exists(category_path)
+        if not folder.is_dir():
+            print(f"❌ Error: '{folder_path}' is not a folder!")
+            return None
         
-        clean_name = clean_filename(file)
-        destination = os.path.join(category_path, clean_name)
-        destination = get_unique_name(destination)
+        # Get all files in the folder (non-recursive)
+        files = [f for f in folder.iterdir() if f.is_file()]
         
-        shutil.move(file_path, destination)
+        if not files:
+            print(f"ℹ️  No files found in '{folder_path}'")
+            return {'total': 0, 'organized': 0, 'failed': 0}
+        
+        organized_count = 0
+        failed_count = 0
+        summary = {}
+        
+        print(f"\n🚀 Starting to organize {len(files)} files...\n")
+        
+        for file in files:
+            # Skip hidden files (starting with .)
+            if file.name.startswith('.'):
+                continue
+            
+            # Get file extension
+            file_extension = file.suffix[1:]  # Remove the dot
+            
+            # Determine category
+            category = get_category(file_extension)
+            
+            # Create category folder if it doesn't exist
+            category_folder = folder / category
+            category_folder.mkdir(exist_ok=True)
+            
+            # Determine destination path
+            destination = category_folder / file.name
+            
+            # Handle duplicate filenames
+            if destination.exists():
+                # Add number to filename (e.g., photo(1).jpg)
+                name, ext = file.name.rsplit('.', 1) if '.' in file.name else (file.name, '')
+                counter = 1
+                while destination.exists():
+                    new_name = f"{name}({counter}).{ext}" if ext else f"{name}({counter})"
+                    destination = category_folder / new_name
+                    counter += 1
+            
+            try:
+                # Move file to category folder
+                shutil.move(str(file), str(destination))
+                organized_count += 1
+                
+                # Track summary
+                summary[category] = summary.get(category, 0) + 1
+                
+                print(f"✅ Moved: {file.name} → {category}/")
+            
+            except Exception as e:
+                failed_count += 1
+                print(f"❌ Failed to move {file.name}: {str(e)}")
+        
+        # Print summary
+        print(f"\n{'='*50}")
+        print(f"✨ Organization Complete!")
+        print(f"{'='*50}")
+        print(f"📊 Total files organized: {organized_count}")
+        print(f"❌ Failed: {failed_count}")
+        print(f"\n📂 Breakdown:")
+        for category, count in sorted(summary.items()):
+            print(f"   {category}: {count} files")
+        print(f"{'='*50}\n")
+        
+        return {'total': len(files), 'organized': organized_count, 'failed': failed_count}
+    
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        return None
 
-print("Files organized successfully!")
+
+def main():
+    """Main function to run the file organizer."""
+    print("\n" + "="*50)
+    print("🗂️  SMART FILE ORGANIZER")
+    print("="*50)
+    print("Organize your messy folders automatically!\n")
+    
+    # Get folder path from user
+    folder_path = input("📁 Enter the folder path to organize: ").strip()
+    
+    # Remove quotes if user accidentally added them
+    folder_path = folder_path.strip('"\'')
+    
+    # Organize files
+    result = organize_files(folder_path)
+    
+    if result is None:
+        print("Please check the folder path and try again.")
+    elif result['organized'] == 0 and result['total'] == 0:
+        print("No files to organize.")
+    else:
+        print("🎉 Your folder is now organized!")
+
+
+if __name__ == "__main__":
+    main()
