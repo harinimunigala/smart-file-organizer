@@ -169,12 +169,12 @@ This project is licensed under the **MIT License** — see the LICENSE file for 
 
 ## 👤 Author
 
-**Harini Mugila**  
+**Harini Munigala**  
 *BTech IT Student | Python Developer | Open Source Enthusiast*
 
-- 🌐 [GitHub](https://github.com/harinimugila)
-- 💼 [LinkedIn](https://linkedin.com/in/harinimugila)
-- 🐦 [Twitter](https://twitter.com/harinimugila)
+- 🌐 [GitHub](https://github.com/harinimunigala)
+- 💼 [LinkedIn](https://linkedin.com/in/harinimunigala)
+
 
 ---
 
@@ -182,7 +182,7 @@ This project is licensed under the **MIT License** — see the LICENSE file for 
 
 - 📮 Open an **Issue** on GitHub
 - 💭 Start a **Discussion**
-- 🐛 Found a bug? Report it [here](https://github.com/harinimugila/smart-file-organizer/issues)
+- 🐛 Found a bug? Report it [here](https://github.com/harinimunigala/smart-file-organizer/issues)
 
 ---
 
